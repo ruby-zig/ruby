@@ -1,0 +1,12 @@
+name: Zig CC
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ruby-zig/toolchain/.github/workflows/ziguanite.yml@a39d372cdfc9729c8ed80112b2653656541142e9
