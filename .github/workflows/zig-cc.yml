@@ -9,4 +9,4 @@ permissions:
 
 jobs:
   build:
-    uses: ruby-zig/toolchain/.github/workflows/ziguanite.yml@a39d372cdfc9729c8ed80112b2653656541142e9
+    uses: ruby-zig/toolchain/.github/workflows/ziguanite.yml@1396a2ae0bf566f6a3e2bdf1b8878c8209d88830
