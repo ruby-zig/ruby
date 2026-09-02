@@ -3,8 +3,9 @@ name: Zig CC
 on:
   push:
     branches:
-      # Topic branches intentionally get no Zig CC run; the certified
-      # lanes are exactly these four shared branches. See the resolve
+      # Pushes to these four certified shared branches are the ONLY
+      # pushes that trigger a Zig CC run; every other branch (and all
+      # tag pushes) intentionally gets no run at all. See the resolve
       # allowlist in ruby-zig/toolchain .github/workflows/ziguanite.yml.
       - master
       - ruby_4_0
