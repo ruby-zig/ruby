@@ -4357,89 +4357,6 @@ rb_io_gets_internal(VALUE io)
 
 /*
  *  call-seq:
- *    gets(sep = $/, chomp: false)   -> string or nil
- *    gets(limit, chomp: false)      -> string or nil
- *    gets(sep, limit, chomp: false) -> string or nil
- *
- *  Reads and returns a line from the stream;
- *  assigns the return value to <tt>$_</tt>.
- *  See {Line IO}[rdoc-ref:IO@Line+IO].
- *
- *  With no arguments given, returns the next line
- *  as determined by line separator <tt>$/</tt>, or +nil+ if none:
- *
- *    f = File.open('t.txt')
- *    f.gets # => "First line\n"
- *    $_     # => "First line\n"
- *    f.gets # => "\n"
- *    f.gets # => "Fourth line\n"
- *    f.gets # => "Fifth line\n"
- *    f.gets # => nil
- *    f.close
- *
- *  With only string argument +sep+ given,
- *  returns the next line as determined by line separator +sep+,
- *  or +nil+ if none;
- *  see {Line Separator}[rdoc-ref:IO@Line+Separator]:
- *
- *    f = File.new('t.txt')
- *    f.gets('l')   # => "First l"
- *    f.gets('li')  # => "ine\nSecond li"
- *    f.gets('lin') # => "ne\n\nFourth lin"
- *    f.gets        # => "e\n"
- *    f.close
- *
- *  The two special values for +sep+ are honored:
- *
- *    f = File.new('t.txt')
- *    # Get all.
- *    f.gets(nil) # => "First line\nSecond line\n\nFourth line\nFifth line\n"
- *    f.rewind
- *    # Get paragraph (up to two line separators).
- *    f.gets('')  # => "First line\nSecond line\n\n"
- *    f.close
- *
- *  With only integer argument +limit+ given,
- *  limits the number of bytes in the line;
- *  see {Line Limit}[rdoc-ref:IO@Line+Limit]:
- *
- *    # No more than one line.
- *    File.open('t.txt') {|f| f.gets(10) } # => "First line"
- *    File.open('t.txt') {|f| f.gets(11) } # => "First line\n"
- *    File.open('t.txt') {|f| f.gets(12) } # => "First line\n"
- *
- *  With arguments +sep+ and +limit+ given,
- *  combines the two behaviors
- *  (see {Line Separator and Line Limit}[rdoc-ref:IO@Line+Separator+and+Line+Limit]).
- *
- *  Optional keyword argument +chomp+ specifies whether line separators
- *  are to be omitted:
- *
- *    f = File.open('t.txt')
- *    # Chomp the lines.
- *    f.gets(chomp: true) # => "First line"
- *    f.gets(chomp: true) # => "Second line"
- *    f.gets(chomp: true) # => ""
- *    f.gets(chomp: true) # => "Fourth line"
- *    f.gets(chomp: true) # => "Fifth line"
- *    f.gets(chomp: true) # => nil
- *    f.close
- *
- */
-
-static VALUE
-rb_io_gets_m(int argc, VALUE *argv, VALUE io)
-{
-    VALUE str;
-
-    str = rb_io_getline(argc, argv, io);
-    rb_lastline_set(str);
-
-    return str;
-}
-
-/*
- *  call-seq:
  *    lineno -> integer
  *
  *  Returns the current line number for the stream;
@@ -4477,9 +4394,11 @@ rb_io_set_lineno(VALUE io, VALUE lineno)
     return lineno;
 }
 
-/* :nodoc: */
+/* Shared argument handling for the io_getline / io_readline primitives:
+ * disambiguates the sep/limit overload, applies encoding checks, and reads
+ * the line. Does not touch $_ and does not raise on EOF; callers do that. */
 static VALUE
-io_readline(rb_execution_context_t *ec, VALUE io, VALUE sep, VALUE lim, VALUE chomp)
+io_getline_call(VALUE io, VALUE sep, VALUE lim, VALUE chomp)
 {
     long limit = -1;
     if (NIL_P(lim)) {
@@ -4505,7 +4424,24 @@ io_readline(rb_execution_context_t *ec, VALUE io, VALUE sep, VALUE lim, VALUE ch
 
     check_getline_args(&sep, &limit, io);
 
-    VALUE line = rb_io_getline_1(sep, limit, RTEST(chomp), io);
+    return rb_io_getline_1(sep, limit, RTEST(chomp), io);
+}
+
+/* :nodoc: */
+static VALUE
+io_getline(rb_execution_context_t *ec, VALUE io, VALUE sep, VALUE lim, VALUE chomp)
+{
+    VALUE line = io_getline_call(io, sep, lim, chomp);
+    rb_lastline_set_up(line, 1);
+
+    return line;
+}
+
+/* :nodoc: */
+static VALUE
+io_readline(rb_execution_context_t *ec, VALUE io, VALUE sep, VALUE lim, VALUE chomp)
+{
+    VALUE line = io_getline_call(io, sep, lim, chomp);
     rb_lastline_set_up(line, 1);
 
     if (NIL_P(line)) {
@@ -15851,7 +15787,6 @@ Init_IO(void)
     rb_define_method(rb_cIO, "readpartial", io_readpartial, -1);
     rb_define_method(rb_cIO, "read", io_read, -1);
     rb_define_method(rb_cIO, "write", io_write_m, -1);
-    rb_define_method(rb_cIO, "gets", rb_io_gets_m, -1);
     rb_define_method(rb_cIO, "getc", rb_io_getc, 0);
     rb_define_method(rb_cIO, "getbyte", rb_io_getbyte, 0);
     rb_define_method(rb_cIO, "readchar",  rb_io_readchar, 0);
