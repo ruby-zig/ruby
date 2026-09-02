@@ -3,14 +3,15 @@ name: Zig CC
 on:
   push:
     branches:
-      # Pushes to these four certified shared branches are the ONLY
-      # pushes that trigger a Zig CC run; every other branch (and all
-      # tag pushes) intentionally gets no run at all. See the resolve
-      # allowlist in ruby-zig/toolchain .github/workflows/ziguanite.yml.
+      # Push triggers: upstream master, the ruby_* release branches,
+      # and the fleet's own ziguanite/* work branches — nothing else,
+      # and never tag pushes. Triggering is not certification: the
+      # resolve allowlist in ruby-zig/toolchain ziguanite.yml decides
+      # which refs actually build; triggering refs outside it fail
+      # closed there.
       - master
-      - ruby_4_0
-      - ruby_3_4
-      - ruby_3_3
+      - ruby_*
+      - ziguanite/**
   workflow_dispatch:
 
 permissions:
