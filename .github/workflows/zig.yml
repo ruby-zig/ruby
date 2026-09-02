@@ -60,9 +60,19 @@ jobs:
           --disable-zjit
 
       - name: Build
+        id: build
         working-directory: build
-        run: make
+        continue-on-error: true
+        run: make >make.log 2>&1
+
+      - name: Report build failure
+        if: steps.build.outcome == 'failure'
+        working-directory: build
+        run: |
+          tail -n 120 make.log
+          exit 1
 
       - name: Test
+        if: steps.build.outcome == 'success'
         working-directory: build
         run: make test
