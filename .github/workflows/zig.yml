@@ -1,0 +1,70 @@
+name: Zig
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '**/man/*'
+      - '**.md'
+      - '**.rdoc'
+      - '**/.document'
+      - '.*.yml'
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**/man/*'
+      - '**.md'
+      - '**.rdoc'
+      - '**/.document'
+      - '.*.yml'
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }} / ${{ startsWith(github.event_name, 'pull') && github.ref_name || github.sha }}
+  cancel-in-progress: ${{ startsWith(github.event_name, 'pull') }}
+
+permissions:
+  contents: read
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      JSON_DISABLE_SIMD: 1
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup/ubuntu
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+          use-cache: false
+
+      - uses: ./.github/actions/setup/directories
+        with:
+          checkout: ''
+          builddir: build
+
+      - name: Configure
+        working-directory: build
+        env:
+          CC: zig cc
+          CXX: zig c++
+        run: >-
+          ../configure -C
+          --disable-install-doc
+          --disable-yjit
+          --disable-zjit
+
+      - name: Build
+        working-directory: build
+        run: make
+
+      - name: Test
+        working-directory: build
+        run: make test
