@@ -2,6 +2,16 @@ name: Zig CC
 
 on:
   push:
+    branches:
+      # Push triggers: upstream master, the ruby_* release branches,
+      # and the fleet's own ziguanite/* work branches — nothing else,
+      # and never tag pushes. Triggering is not certification: the
+      # resolve allowlist in ruby-zig/toolchain ziguanite.yml decides
+      # which refs actually build; triggering refs outside it fail
+      # closed there.
+      - master
+      - ruby_*
+      - ziguanite/**
   workflow_dispatch:
 
 permissions:
@@ -9,4 +19,4 @@ permissions:
 
 jobs:
   build:
-    uses: ruby-zig/toolchain/.github/workflows/ziguanite.yml@25b68943e155e18351b125936c331636e210bfb5
+    uses: ruby-zig/toolchain/.github/workflows/ziguanite.yml@0ae7dc44a2e19e132b59216096e14e1136b73e4a
