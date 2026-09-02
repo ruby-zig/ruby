@@ -2,6 +2,14 @@ name: Zig CC
 
 on:
   push:
+    branches:
+      # Topic branches intentionally get no Zig CC run; the certified
+      # lanes are exactly these four shared branches. See the resolve
+      # allowlist in ruby-zig/toolchain .github/workflows/ziguanite.yml.
+      - master
+      - ruby_4_0
+      - ruby_3_4
+      - ruby_3_3
   workflow_dispatch:
 
 permissions:
